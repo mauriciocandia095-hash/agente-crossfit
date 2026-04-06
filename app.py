@@ -2,6 +2,8 @@ import os
 from dotenv import load_dotenv
 from google import genai
 import gradio as gr
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
 
 # Cargar variables
 load_dotenv()
@@ -49,8 +51,30 @@ def generar_plan(nivel, molestias, objetivo):
         contents=prompt
     )
 
-    return response.text
+    plan_texto = response.text
 
+    pdf_path = crear_pdf(plan_texto)
+
+    return plan_texto, pdf_path
+def crear_pdf(texto):
+    file_path = "plan_entrenamiento.pdf"
+    c = canvas.Canvas(file_path, pagesize=letter)
+
+    textobject = c.beginText(40, 750)
+    textobject.setFont("Helvetica", 10)
+
+    max_width = 90  # caracteres por línea aprox
+
+    for line in texto.split("\n"):
+        while len(line) > max_width:
+            textobject.textLine(line[:max_width])
+            line = line[max_width:]
+        textobject.textLine(line)
+
+    c.drawText(textobject)
+    c.save()
+
+    return file_path
 # Interfaz Gradio
 interfaz = gr.Interface(
     fn=generar_plan,
@@ -62,7 +86,9 @@ interfaz = gr.Interface(
     gr.Textbox(label="Molestias o lesiones", placeholder="Ej: dolor de rodilla, hombro, etc."),
     gr.Textbox(label="Objetivo", placeholder="Ej: mejorar piernas, glúteos, fuerza general, etc.")
 ],
-    outputs=gr.Textbox(label="Plan de entrenamiento"),
+    outputs=[
+    gr.Textbox(label="Plan de entrenamiento"),
+    gr.File(label="Descargar PDF")],
     title="Agente de Entrenamiento CrossFit",
     description="Genera un plan personalizado de 5 días basado en tu nivel y molestias"
 )
