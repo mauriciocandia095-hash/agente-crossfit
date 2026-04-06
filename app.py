@@ -9,7 +9,7 @@ load_dotenv()
 # Cliente Gemini
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-def generar_plan(nivel, molestias):
+def generar_plan(nivel, molestias, objetivo):
     if not nivel:
         return "Debes seleccionar un nivel."
 
@@ -22,6 +22,7 @@ def generar_plan(nivel, molestias):
     Usuario:
     - Nivel: {nivel}
     - Molestias: {molestias}
+    - Objetivo: {objetivo}
 
     Genera un plan de entrenamiento de 5 días.
 
@@ -40,6 +41,7 @@ def generar_plan(nivel, molestias):
     - Si hay molestias, adapta ejercicios
     - Usa lenguaje claro
     - No expliques teoría, solo el plan
+    - El entrenamiento debe ser integral pero con énfasis en el objetivo del usuario
     """
 
     response = client.models.generate_content(
@@ -53,12 +55,13 @@ def generar_plan(nivel, molestias):
 interfaz = gr.Interface(
     fn=generar_plan,
     inputs=[
-        gr.Dropdown(
-            choices=["principiante", "intermedio", "avanzado"],
-            label="Nivel de CrossFit"
-        ),
-        gr.Textbox(label="Molestias o lesiones", placeholder="Ej: dolor de rodilla, hombro, etc.")
-    ],
+    gr.Dropdown(
+        choices=["principiante", "intermedio", "avanzado"],
+        label="Nivel de CrossFit"
+    ),
+    gr.Textbox(label="Molestias o lesiones", placeholder="Ej: dolor de rodilla, hombro, etc."),
+    gr.Textbox(label="Objetivo", placeholder="Ej: mejorar piernas, glúteos, fuerza general, etc.")
+],
     outputs=gr.Textbox(label="Plan de entrenamiento"),
     title="Agente de Entrenamiento CrossFit",
     description="Genera un plan personalizado de 5 días basado en tu nivel y molestias"
